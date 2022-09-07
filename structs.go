@@ -3,16 +3,13 @@ package structs
 
 import (
 	"fmt"
-
 	"reflect"
 )
 
-var (
-	// DefaultTagName is the default tag name for struct fields which provides
-	// a more granular to tweak certain structs. Lookup the necessary functions
-	// for more info.
-	DefaultTagName = "structs" // struct's field default tag name
-)
+// DefaultTagName is the default tag name for struct fields which provides
+// a more granular to tweak certain structs. Lookup the necessary functions
+// for more info.
+var DefaultTagName = "structs" // struct's field default tag name
 
 // Struct encapsulates a struct type to provide several high level functions
 // around the struct.
@@ -200,7 +197,14 @@ func (s *Struct) Values() []interface{} {
 			continue
 		}
 
-		if IsStruct(val.Interface()) && !tagOpts.Has("omitnested") {
+		// XXX:加上`structs:"xxx,omitnested"``的方式需要使用方规范,临时将time类型和decimal直接不继续递归
+		fType := field.Type.String()
+		shouldOmit := false
+		if fType == "*time.Time" || fType == "time.Time" || fType == "decimal.Decimal" || fType == "*decimal.Decimal" {
+			shouldOmit = true
+		}
+
+		if IsStruct(val.Interface()) && !tagOpts.Has("omitnested") && !shouldOmit {
 			// look out for embedded structs, and convert them to a
 			// []interface{} to be added to the final values slice
 			t = append(t, Values(val.Interface())...)
